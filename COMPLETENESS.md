@@ -48,9 +48,20 @@ No `textures/` folder. Booth textures are canvas-generated (not missing files).
 - `HOW-TO-PLAY.md` + in-game how line (tap + 1–0) in `ui-l1.json`.
 - Engine version **2.7.1**.
 
+## Verified locally (Chrome + WebGL)
+
+- Start ticket: pack chips, tap/1–0 how line, HOW TO PLAY link, L1 languages, PLAY.
+- Fair bottles: opaque painted milk bottles in 5×2 (not glass leftover).
+- Korean L1: UI + reveal captions (`소`, `새`, numbers `일곱`).
+- Pack swap: Animals ↔ Numbers via chips; numbers picture face fills with the digit.
+- Keys 1–0 shoot; pointer/click still works.
+- Round 3 bow weapon pose `x=0.42` (not x=0), kept on-screen at `y=-0.1`.
+- Asset 404s: none after adding `favicon.svg`. Google Fonts are optional.
+
 ## Remaining gaps
 
 - `starter-en-ko-v1.json` has no baked audio/pics — omitted from pack UI.
 - Google Fonts still load from the network (gameplay does not depend on them).
 - SFX oscillators still play under baked carny/word MP3s (local, not TTS).
 - Dist-only repo: patches are in the published bundle, not a separate `src/`.
+- Forest round uses wooden disks (theme toys), not milk bottles — by design.
