@@ -8,7 +8,7 @@ const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..")
 const out = path.resolve(process.argv[2] || "/workspace/memory-match-shots");
 const wmDir = process.argv[3] ? path.resolve(process.argv[3]) : null;
 fs.mkdirSync(out, { recursive: true });
-const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".mp3": "audio/mpeg", ".woff2": "font/woff2", ".woff": "font/woff", ".webp": "image/webp", ".jpg": "image/jpeg" };
+const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".mp3": "audio/mpeg", ".woff2": "font/woff2", ".woff": "font/woff", ".webp": "image/webp", ".jpg": "image/jpeg", ".png": "image/png", ".glb": "model/gltf-binary" };
 const serve = (dir, extra = {}) => new Promise((res) => { const s = http.createServer((req, rsp) => {
   const u = decodeURIComponent(req.url.split("?")[0]);
   if (extra[u]) { rsp.writeHead(200, { "content-type": "text/html; charset=utf-8" }); return rsp.end(extra[u]); }
@@ -30,17 +30,18 @@ async function newPage(browser, opts, bad) {
 }
 const st = (p) => p.evaluate(() => window.MRJMemoryMatch.getState());
 const W = (p, fn, t = 30000) => p.waitForFunction(fn, null, { timeout: t });
-const browser = await chromium.launch({ args: ["--autoplay-policy=no-user-gesture-required"] });
+const browser = await chromium.launch({ args: ["--autoplay-policy=no-user-gesture-required", "--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] });
 const server = await serve(root); const B = `http://localhost:${server.address().port}`;
 try {
   const bad = [];
   const { ctx, page } = await newPage(browser, { viewport: { width: 1280, height: 800 } }, bad);
   await page.goto(`${B}/index.html?student=zz_test_memory`);
-  await page.waitForSelector("#play", { timeout: 15000 }); await page.waitForTimeout(900);
+  await page.waitForSelector("#play", { timeout: 60000 }); await page.waitForTimeout(900);
   await page.screenshot({ path: `${out}/01-start-desktop.png` });
   await page.click("#play");
   await page.waitForTimeout(2300); await page.screenshot({ path: `${out}/02-round1-booth.png` });
   let s = await st(page);
+  check(await page.evaluate(() => !!document.querySelector("canvas.stage3d")), "3D WebGL stage present");
   check(s.view === "play" && s.round === 1 && s.cards.length === 10 && s.cards.every((c) => c.role === "picture" || c.role === "audio"), "round 1: 10 cards, picture + audio");
   // a miss: two cards of different items (real mouse clicks)
   const a = s.cards[0], b = s.cards.find((c) => c.itemId !== a.itemId);
@@ -76,7 +77,7 @@ try {
     const wp = await newPage(browser, { viewport: { width: 1000, height: 700 } }, bad);
     await wp.page.goto(`http://localhost:${ws.address().port}/host.html`);
     const f = await (await wp.page.waitForSelector("#f")).contentFrame();
-    await f.waitForSelector("#play", { timeout: 15000 });
+    await f.waitForSelector("#play", { timeout: 60000 });
     check(await f.evaluate(() => !document.querySelector("#packs, #langs, #name, #teacher, #skipbar:not(.hidden)")), "WM: no sets / language / name / teacher skip");
     await f.click("#play");
     await f.evaluate(PILOT);

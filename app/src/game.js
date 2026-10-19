@@ -5,13 +5,14 @@ import { createFx } from "./kit/fx.js";
 import { createInput } from "./kit/input.js";
 import { el, esc, muteButton } from "./kit/ui.js";
 import * as R from "./rules.js";
-import { createScene } from "./scene.js";
+import { createScene3D } from "./scene3d.js";
 
 const SFX = ["pop", "whoosh", "splash", "thud", "buzz", "chime", "sparkle", "flip", "click", "fanfare", "laser", "boom"];
 const uid = (p) => (crypto.randomUUID ? `${p}_${crypto.randomUUID()}` : `${p}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`);
 
 export async function startGame(host, { pack, ui, packs, packFile, embedded, wm, locale, playerName, playMode, studentId, quality }) {
-  const stage = createStage(host, { quality });
+  const stage = createStage(host, { quality: "high" }); // transparent 2D overlay for floating text / flashes
+  stage.canvas.classList.add("overlay");
   const audio = createAudio({ sfx: Object.fromEntries(SFX.map((k) => [k, `./audio/sfx/${k}.mp3`])), music: "./audio/music-town-theme.mp3", musicVol: 0.14 });
   const fx = createFx(stage);
   const L = {
@@ -22,7 +23,7 @@ export async function startGame(host, { pack, ui, packs, packFile, embedded, wm,
   const records = [], board = []; // memory only (was localStorage)
   const S = (k) => R.uiString(ui, L.locale, k);
   const canSkip = () => (L.embedded ? false : L.playMode === "maker" ? true : !!L.teacherSkip);
-  const scene = createScene(stage, L, fx);
+  const scene = await createScene3D(host, L, fx, stage, { quality });
 
   // ---------- voice ----------
   const carnyLine = (kind) => { const d = R.roundDef(L.round); const id = kind === "round" ? `carnies/${d.carny}-round` : `carnies/${d.carny}-${kind}-${Math.random() < 0.5 ? 1 : 2}`; audio.clip(R.audioUrl(id), { vol: 0.95 }); };
@@ -228,7 +229,7 @@ export async function startGame(host, { pack, ui, packs, packFile, embedded, wm,
   window.MRJMemoryMatch = {
     version: R.VERSION, module_id: R.MODULE_ID, activity_id: R.ACTIVITY_ID, pack, ui,
     engine: { roundDef: R.roundDef, dealHeat: R.dealCards, isComplementaryPair: R.isPair, formatMs: R.formatMs },
-    getState: () => ({ view: L.view, round: L.round, heat: L.heat, matched: L.matched, locked: L.locked, embedded: L.embedded, records: records.length, usedSkip: L.usedSkip, streak: L.streak, low: stage.low, total_ms: Math.round(totalMs()),
+    getState: () => ({ view: L.view, round: L.round, heat: L.heat, matched: L.matched, locked: L.locked, embedded: L.embedded, records: records.length, usedSkip: L.usedSkip, streak: L.streak, low: scene.low, quality: scene.quality, fps: Math.round(scene.stage3.fps), total_ms: Math.round(totalMs()),
       cards: L.cards.map((c) => ({ uid: c.uid, itemId: c.itemId, role: c.role, face: c.face, down: c.down, matched: !!c.matched, ...scene.center(c.uid) })) }),
     tap,
   };

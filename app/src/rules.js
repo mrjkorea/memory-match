@@ -1,6 +1,6 @@
 // Memory Game rules — kept exactly as v4.2.0 (6 rounds, heats of 5 pairs, complementary pairs).
 // Pure: runs in node tests and any webview.
-export const VERSION = "5.0.0";
+export const VERSION = "5.1.0";
 export const MODULE_ID = "memory-match";
 export const ACTIVITY_ID = "memory-game";
 export const ROUNDS = 6;

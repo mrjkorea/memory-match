@@ -49,5 +49,7 @@ if (wmDir) {
   for (const f of ["music-town-theme.mp3", "CREDITS.txt"]) copy("audio/" + f);
   for (const f of fs.readdirSync(path.join(root, "audio/sfx"))) copy("audio/sfx/" + f);
   for (const f of fs.readdirSync(path.join(root, "pics"))) if (f.endsWith(".webp")) copy("pics/" + f);
+  const walk = (d) => { for (const f of fs.readdirSync(path.join(root, d), { withFileTypes: true })) f.isDirectory() ? walk(d + "/" + f.name) : copy(d + "/" + f.name); };
+  walk("models"); // Kenney CC0 3D models (+ their Textures/colormap.png and licences)
 }
 console.log(`published ${js} ${css} -> ${outDir} (build ${build})`);
