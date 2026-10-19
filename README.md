@@ -3,6 +3,9 @@
 MRJ kid English game. Six carnival booth rounds. Tap two targets to flip them and match the pairs
 (picture ↔ sound, picture ↔ word, sound ↔ word, sound ↔ meaning, meaning ↔ word, meaning ↔ sound). Your total time is your score.
 
+## 2026-10-19 cleanup
+Removed files nothing loads after the 3D v2 merge (#4): the old 4.x bundle `assets/index-CjSx5yu_.js` and its patch script `scripts/patch-wordmaster-mode.mjs`, old CSS `assets/index-O6TDW3G6.css`, the `pics/*.jpg` originals (the game uses `pics/*.webp`), the unused top-level `audio/carny-*.mp3` (lines come from `audio/carnies/`) and `audio/prize/applause.wav` (the mp3 is used).
+
 ## 3D v2 (v5.1.0)
 The booth is real 3D again (three.js), like the original 4.x game: `app/src/scene3d.js` restores the first-person carnival booth with the same six themes (fair, boardwalk, field, western, forest, seaside), the same knock-down targets, carny and thrower hand/ammo, and makes it richer: a striped awning with glowing bulbs, bunting, a prize shelf, 3D card flips, particle hits/matches, prize presentation, bloom + shadows on high quality with an auto/`?q=low` fallback. Kenney CC0 models in `models/` (see `models/CREDITS.txt`). Rules, packs, telemetry and the WM done message are unchanged (`rules.js`, `game.js`). `scene.js` (the 2D v5.0 renderer) is kept for reference.
 
