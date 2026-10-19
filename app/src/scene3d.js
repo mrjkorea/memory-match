@@ -195,7 +195,7 @@ export async function createScene3D(host, L, fx, stage, { quality } = {}) {
     layoutCarny(); clearCards();
   }
   function dispose(o) { o.traverse((m) => { if (m.geometry) m.geometry.dispose(); }); }
-  function clearCards() { for (const v of views.values()) root && root.remove(v.anchor); views.clear(); hits.length = 0; }
+  function clearCards() { for (const v of views.values()) root && root.remove(v.anchor); views.clear(); hits.length = 0; if (typeof strip !== "undefined") strip.innerHTML = ""; }
   const portrait = () => S3.w / S3.h < 0.85;
   function camDist() { const P = portrait(), fov = P ? 50 : 40, a = S3.w / S3.h, need = (P ? 2.3 : 3.0) / (2 * Math.tan(THREE.MathUtils.degToRad(fov / 2)) * a); return Math.max(P ? 4.45 : 5.15, need); } // narrow phones: back up so all 5 columns fit
   function layoutCamera() { const P = portrait(); camera.fov = P ? 50 : 40; camera.position.set(0, P ? 1.18 : 1.32, camDist()); camera.lookAt(0, 1.02, 0); camera.updateProjectionMatrix(); }
@@ -255,9 +255,15 @@ export async function createScene3D(host, L, fx, stage, { quality } = {}) {
       if (s.t > s.dur + 0.12) { scene.remove(s.grp); s.flash && scene.remove(s.flash); shots.splice(i, 1); }
     }
   }
-  function flip(uid, on) { const v = views.get(uid); if (!v) return; v.target = on ? 1 : 0; if (on) { v.tgFly = 0; } else { v.tgBack = 0; } }
+  // bottom reveal strip from the original: the open pair (max 2) shown big; tap a sound card to hear it again
+  const strip = document.createElement("div"); strip.className = "mm-reveal"; host.appendChild(strip);
+  function stripSet() { strip.innerHTML = ""; const open = [...views.values()].filter((v) => v.target > 0.5 && !v.stripGone).sort((a, b) => a.openAt - b.openAt).slice(-2);
+    for (const v of open) { const b = document.createElement("button"); b.type = "button"; b.className = "mm-tile" + (v.gone ? " ok" : "") + (v.shake > 0 ? " bad" : ""); const im = document.createElement("img"); im.alt = v.c.text || v.c.itemEn || ""; im.src = v.url || (v.url = faceCanvas(v.c, L.locale, v.im, false).image.toDataURL("image/png")); b.appendChild(im);
+      b.addEventListener("click", (e) => { e.stopPropagation(); window.MRJMemoryMatch && window.MRJMemoryMatch.tap(v.c.uid); }); strip.appendChild(b); } }
+  function flip(uid, on) { const v = views.get(uid); if (!v) return; v.target = on ? 1 : 0; if (on) { v.openAt = performance.now(); v.stripGone = false; } stripSet(); }
   function matched(uids, streak) {
     carnyMood = { kind: "hit", t: 0 };
+    setTimeout(() => { uids.forEach((u) => { const v = views.get(u); if (v) v.stripGone = true; }); stripSet(); }, 900);
     uids.forEach((u, j) => { const v = views.get(u); if (!v) return; v.gone = true; v.faceMat.map && (v.faceMat.map = faceCanvas(v.c, L.locale, v.im, true)); v.faceMat.needsUpdate = true; const p = worldOf(u);
       parts.burst(p, { n: 40, colors: [0xffd23f, 0x3ddc84, 0xff5e7e, 0xffffff].map((c) => new THREE.Color(c)), speed: 2.2, size: 0.07, life: 0.9, grav: -4, up: 1.2, low: S3.low });
       const a = v.anchor, y0 = a.position.y, s0 = a.scale.x;
@@ -267,7 +273,7 @@ export async function createScene3D(host, L, fx, stage, { quality } = {}) {
     fx.flash("#fff7c2", 0.12);
     const pz = root && root.userData.prizes; pz && pz.forEach((o, i) => { const y0 = o.position.y; tw.add(0.5, (k) => (o.position.y = y0 + Math.sin(k * Math.PI) * 0.12), { done: () => (o.position.y = y0) }); });
   }
-  function miss(uids) { carnyMood = { kind: "miss", t: 0 }; for (const u of uids) { const v = views.get(u); if (v) v.shake = 1; } shakeAmp = 0.03; }
+  function miss(uids) { carnyMood = { kind: "miss", t: 0 }; for (const u of uids) { const v = views.get(u); if (v) v.shake = 1; } shakeAmp = 0.03; stripSet(); }
   let shakeAmp = 0;
   function prize(big) {
     presenting = true; if (heldRig) heldRig.visible = false;
