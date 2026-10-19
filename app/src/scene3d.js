@@ -46,7 +46,8 @@ function carny(c) {
   const g = new THREE.Group(), skin = mat(c.skin, { roughness: 0.58 }), shirt = mat(c.shirt, { roughness: 0.72 }), pants = mat(c.pants, { roughness: 0.78 }), hair = mat(c.hair, { roughness: 0.8 }), eye = mat(0x1a1008, { roughness: 0.3 });
   g.add(mesh(Cap(0.16, 0.26), shirt, 0, 0.62), mesh(Cap(0.07, 0.2), pants, -0.08, 0.28), mesh(Cap(0.07, 0.2), pants, 0.08, 0.28));
   const head = new THREE.Group(); head.position.set(0, 0.98, 0); g.add(head);
-  head.add(mesh(Sph(0.14, 16, 12), skin), mesh(Sph(0.145, 14, 10), hair, 0, 0.06, -0.02), mesh(Sph(0.018, 8, 6), eye, -0.05, 0.02, 0.12), mesh(Sph(0.018, 8, 6), eye, 0.05, 0.02, 0.12));
+  head.add(mesh(Sph(0.14, 16, 12), skin),  mesh(Sph(0.018, 8, 6), eye, -0.05, 0.02, 0.12), mesh(Sph(0.018, 8, 6), eye, 0.05, 0.02, 0.12));
+  const hairCap = mesh(new THREE.SphereGeometry(0.148, 16, 10, 0, Math.PI * 2, 0, Math.PI * 0.5), hair, 0, 0.01, -0.01); hairCap.rotation.x = -0.45; head.add(hairCap, mesh(Sph(0.12, 12, 8), hair, 0, 0.0, -0.05)); // hair on top/back only, face stays visible
   const smile = new THREE.Mesh(new THREE.TorusGeometry(0.045, 0.008, 6, 16, Math.PI), eye); smile.rotation.z = Math.PI; smile.position.set(0, -0.03, 0.125); head.add(smile);
   const arm = new THREE.Group(); arm.position.set(0.18, 0.78, 0.02); arm.add(mesh(Cap(0.05, 0.2), shirt, 0.08, -0.12, 0.08)); g.add(arm);
   const arm2 = mesh(Cap(0.05, 0.2), shirt, -0.2, 0.66, 0.04); arm2.rotation.z = -0.3; g.add(arm2);
@@ -196,7 +197,8 @@ export async function createScene3D(host, L, fx, stage, { quality } = {}) {
   function dispose(o) { o.traverse((m) => { if (m.geometry) m.geometry.dispose(); }); }
   function clearCards() { for (const v of views.values()) root && root.remove(v.anchor); views.clear(); hits.length = 0; }
   const portrait = () => S3.w / S3.h < 0.85;
-  function layoutCamera() { const P = portrait(); camera.fov = P ? 50 : 40; camera.position.set(0, P ? 1.18 : 1.32, P ? 4.45 : 5.15); camera.lookAt(0, 1.02, 0); camera.updateProjectionMatrix(); }
+  function camDist() { const P = portrait(), fov = P ? 50 : 40, a = S3.w / S3.h, need = (P ? 2.3 : 3.0) / (2 * Math.tan(THREE.MathUtils.degToRad(fov / 2)) * a); return Math.max(P ? 4.45 : 5.15, need); } // narrow phones: back up so all 5 columns fit
+  function layoutCamera() { const P = portrait(); camera.fov = P ? 50 : 40; camera.position.set(0, P ? 1.18 : 1.32, camDist()); camera.lookAt(0, 1.02, 0); camera.updateProjectionMatrix(); }
   function layoutCarny() { const a = root && root.userData.carny; if (!a) return; if (portrait()) { a.position.set(0.05, 0, -1.25); a.scale.setScalar(0.72); a.rotation.y = 0.05; } else { a.position.set(-1.95, 0, 0.05); a.scale.setScalar(1.05); a.rotation.y = 0.5; } a.userData.baseY = a.position.y; }
   function slotPos(i, n) { // original grid: 5 columns, 2 rows (or more)
     const P = portrait(), H = 5, Q = Math.max(1, Math.ceil(n / H)), Tx = P ? 0.4 : 0.52, A = i % H, U = Math.floor(i / H), inRow = Math.min(H, n - U * H);
@@ -273,9 +275,9 @@ export async function createScene3D(host, L, fx, stage, { quality } = {}) {
     const pet = M["pet-" + PETS[((L.round || 1) - 1) % PETS.length]];
     prizeObj = new THREE.Group(); const plush = pet ? fit(pet.clone(true), big ? 0.75 : 0.55) : new THREE.Mesh(Sph(0.2), mat(0xffb8c8)); prizeObj.add(plush);
     if (big) { const cup = new THREE.Group(), gold = mat(0xffd24a, { metalness: 0.92, roughness: 0.18, emissive: 0x8a6a10, emissiveIntensity: 0.35 }); cup.add(mesh(Cyl(0.16, 0.08, 0.22, 20), gold, 0, 0.12), mesh(Cyl(0.03, 0.03, 0.12), gold, 0, -0.04), mesh(Cyl(0.1, 0.1, 0.04, 20), gold, 0, -0.1)); cup.position.set(0.42, 0, 0); prizeObj.add(cup); }
-    scene.add(prizeObj);
+    scene.add(prizeObj); const po = prizeObj; // local: setTheme() may clear prizeObj while this tween still runs
     const end = new THREE.Vector3(0.05, P ? 1.45 : 1.55, P ? 2.15 : 2.35), arm = new THREE.Vector3();
-    tw.add(big ? 1.25 : 0.95, (k) => { const b = ease.outCubic(Math.min(1, k / 0.45)); if (ann) { ann.position.lerpVectors(A0, A1, b); ann.userData.arm.rotation.x = -1.15 * b; ann.userData.arm.getWorldPosition(arm); } else arm.set(0, 1, 0); const q = ease.outCubic(Math.max(0, (k - 0.28) / 0.72)); prizeObj.position.lerpVectors(arm, end, q); prizeObj.rotation.y = k * Math.PI * 2; }, { ease: (t) => t });
+    tw.add(big ? 1.25 : 0.95, (k) => { const b = ease.outCubic(Math.min(1, k / 0.45)); if (ann) { ann.position.lerpVectors(A0, A1, b); ann.userData.arm.rotation.x = -1.15 * b; ann.userData.arm.getWorldPosition(arm); } else arm.set(0, 1, 0); const q = ease.outCubic(Math.max(0, (k - 0.28) / 0.72)); po.position.lerpVectors(arm, end, q); po.rotation.y = k * Math.PI * 2; }, { ease: (t) => t });
     const cols = [0xc1121f, 0xf4d35e, 0x2ec4b6, 0xfff3ec, 0xff4d8d, 0x3d6bff].map((c) => new THREE.Color(c));
     setTimeout(() => { parts.burst(new THREE.Vector3(0, 2.4, 1.6), { n: big ? 160 : 90, colors: cols, speed: 2.4, size: 0.07, life: 2, grav: -2.5, up: 1.4, low: S3.low }); }, 400);
     fx.confetti(stage.w / 2, stage.h * 0.3, big ? 120 : 60);
