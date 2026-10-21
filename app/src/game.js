@@ -66,7 +66,7 @@ export async function startGame(host, { pack, ui, packs, packFile, embedded, wm,
     L.view = "start"; applyDir(); show("start", true); show("end", false);
     const chips = (list, on, attr) => list.map((x) => `<button type="button" class="chip${x.on ? " on" : ""}" data-${attr}="${esc(x.v)}">${esc(x.label)}</button>`).join("");
     $("start").innerHTML = `<div class="badge">🎪</div><p class="kicker">MRJ ENGLISH · v${R.VERSION}</p><h1>Memory Game</h1><p class="sub">${esc(pack.title || "")}</p>
-      <p class="lead">${esc(S("how"))}</p>
+      <div class="mrj-h2p" id="mrj-h2p"><h2>HOW TO PLAY</h2><ul class="mrj-h2p-list"><li><span class="ic">🃏</span>Turn over 2 cards.</li><li><span class="ic">👂</span>Listen and read the words.</li><li><span class="ic">✅</span>Find the 2 cards that match.</li><li><span class="ic">⏱️</span>Match them all, fast!</li></ul><div class="mrj-h2p-ctl"><div class="ctl"><b>💻 Computer</b><span>🖱️ Click a card</span><span><kbd>←</kbd><kbd>→</kbd> choose a card</span><span><kbd>Enter</kbd> or <kbd>Space</kbd> turn it</span></div><div class="ctl"><b>📱 Touch</b><span>👆 Tap a card to turn it</span><span>👆 Tap another card to match</span></div></div></div>
       ${L.embedded ? "" : `<p class="lab">${esc(S("pack"))}</p><div class="chips" id="packs">${chips((packs || []).map((p) => ({ v: p.file, label: p.title || p.file, on: p.file === packFile })), 0, "pack")}</div>
       <label class="lab">Name <input id="name" type="text" maxlength="24" autocomplete="nickname" value="${esc(L.playerName)}"/></label>
       <div class="chips"><button type="button" class="chip${canSkip() ? " on" : ""}" id="teacher">Teacher</button>${L.playMode === "maker" ? `<span class="hint">Maker: skip heats and rounds while you test.</span>` : ""}</div>
@@ -185,6 +185,7 @@ export async function startGame(host, { pack, ui, packs, packFile, embedded, wm,
   }
   function end() {
     L.view = "end"; L.locked = true;
+    audio.stopMusic(); setTimeout(() => { if (L.view === "end") audio.stopAll(); }, 3000); // run end: music off, then AudioContext suspended
     const A = L.completedMs.reduce((a, b) => a + b, 0);
     if (!canSkip() && !L.usedSkip) board.push({ module_id: R.MODULE_ID, name: L.playerName || "Player", total_ms: Math.round(A), rounds: R.ROUNDS, at: new Date().toISOString() });
     emit({ item_id: "session", skill_tags: pack.skill_tags || [], response: "win", correct: true, latency_ms: Math.round(A), accuracy: 1, points: 0, errors: 0, started_at: new Date(Date.now() - A).toISOString(), ended_at: new Date().toISOString(), ui_locale: L.locale, round_index: R.ROUNDS, total_ms: Math.round(A) });
@@ -226,6 +227,11 @@ export async function startGame(host, { pack, ui, packs, packFile, embedded, wm,
     fx.update(dt);
     scene.draw(dt);
   });
+  // Word Master close / tab hidden / page unload: stop all sound
+  const mrjHardStop = () => { audio.stopVoice(); audio.stopAll(); };
+  window.addEventListener("message", (ev) => { const d = ev.data; if (d === "mrj-stop" || (d && d.type === "mrj-stop")) mrjHardStop(); });
+  window.addEventListener("pagehide", mrjHardStop);
+  document.addEventListener("visibilitychange", () => { if (document.hidden) mrjHardStop(); else if (L.view === "play") { audio.unlock(); audio.startMusic(); } });
   window.MRJMemoryMatch = {
     version: R.VERSION, module_id: R.MODULE_ID, activity_id: R.ACTIVITY_ID, pack, ui,
     engine: { roundDef: R.roundDef, dealHeat: R.dealCards, isComplementaryPair: R.isPair, formatMs: R.formatMs },
