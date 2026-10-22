@@ -29,8 +29,10 @@ export async function startGame(host, { pack, ui, packs, packFile, embedded, wm,
   const carnyLine = (kind) => { const d = R.roundDef(L.round); const id = kind === "round" ? `carnies/${d.carny}-round` : `carnies/${d.carny}-${kind}-${Math.random() < 0.5 ? 1 : 2}`; audio.clip(R.audioUrl(id), { vol: 0.95 }); };
   // Baked audio only. If a clip is missing the card shows the word instead (no text-to-speech).
   async function sayWord(card) {
-    const url = R.audioUrl(String(card.audioId || "").replace(/\.mp3$/i, ""));
+    // Keep the extension: audioUrl adds ".mp3" only to bare ids, so stripping it broke absolute URLs (Word Master cards).
+    const url = R.audioUrl(String(card.audioId || ""));
     const ok = url ? await audio.speak([url]) : false;
+    if (!ok && url) console.warn("[memory-match] word clip failed to load:", url, "word:", card.itemEn || card.itemId);
     if (!ok && !audio.isMuted()) card.noAudio = true;
   }
 
