@@ -187,7 +187,7 @@ export async function createScene3D(host, L, fx, stage, { quality } = {}) {
     def = d; theme = d.theme || "fair"; ep++;
     if (root) { scene.remove(root); dispose(root); }
     root = booth(theme, M); scene.add(root);
-    const T = TH[theme]; scene.background = new THREE.Color(T.bg); scene.fog.color.setHex(T.fog); scene.fog.near = T.fogN; scene.fog.far = T.fogF; S3.renderer.setClearColor(T.bg, 1);
+    const T = TH[theme]; scene.background = new THREE.Color(T.bg); scene.userData.softSky = T.sky; scene.fog.color.setHex(T.fog); scene.fog.near = T.fogN; scene.fog.far = T.fogF; S3.renderer.setClearColor(T.bg, 1);
     document.documentElement.setAttribute("data-arena", theme);
     backTex && backTex.dispose(); backTex = backCanvas(theme);
     if (heldRig) camera.remove(heldRig); heldRig = rig(d.ammo, d.carny); shadowAll(heldRig, false, false); camera.add(heldRig);
