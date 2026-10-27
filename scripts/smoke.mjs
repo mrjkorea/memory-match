@@ -24,6 +24,20 @@ async function newPage(browser, opts, bad) {
   const ctx = await browser.newContext(opts);
   await ctx.route("https://script.google.com/**", (r) => { bad.push(r.request().url()); r.abort(); });
   await ctx.route("https://fonts.googleapis.com/**", (r) => r.fulfill({ contentType: "text/css", body: "" }));
+  await ctx.route("https://mrjkorea.github.io/mrj-signin/**", (r) => {
+    const u = r.request().url();
+    if (u.includes("mrj-auth.css")) return r.fulfill({ contentType: "text/css", body: "" });
+    if (u.includes("mrj-auth-boot")) {
+      return r.fulfill({
+        contentType: "text/javascript",
+        body: `(function(){function go(){var g=document.getElementById("mrj-auth-gate");if(!g){g=document.createElement("div");g.id="mrj-auth-gate";document.body.appendChild(g);}document.documentElement.classList.add("mrj-auth-locked");window.MRJ_AUTH.mount(g,{app:"memory-match",onReady:function(i){document.documentElement.classList.remove("mrj-auth-locked");g.hidden=true;window.MRJ_STUDENT=window.MRJ_AUTH.student();document.dispatchEvent(new CustomEvent("mrj-auth-ready",{bubbles:true,detail:{id:(i&&i.id)||window.MRJ_STUDENT}}));}});}document.readyState==="loading"?document.addEventListener("DOMContentLoaded",go):go();})();`,
+      });
+    }
+    return r.fulfill({
+      contentType: "text/javascript",
+      body: `window.MRJ_AUTH={mount:function(_g,o){if(o&&o.onReady)o.onReady({id:"zz_test_memory"});},student:function(){return"zz_test_memory";},token:function(){return"";},signOut:function(){},noteScore:function(){},loadProgressForApp:function(){return Promise.resolve([]);},progressError:function(){return"";},openProgressPanel:function(){},closeProgressPanel:function(){},isTeacher:function(){return false;}};`,
+    });
+  });
   const page = await ctx.newPage();
   page.on("pageerror", (e) => fails.push("pageerror: " + e.message));
   return { ctx, page };
