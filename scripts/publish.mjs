@@ -8,6 +8,11 @@ const dist = path.join(root, "dist");
 const args = process.argv.slice(2), wi = args.indexOf("--wm");
 const wmDir = wi >= 0 ? path.resolve(args[wi + 1]) : null, outDir = wmDir || root;
 const build = JSON.parse(fs.readFileSync(path.join(root, "version.json"), "utf8")).build;
+const mrjSigninHead = `    <meta name="robots" content="noindex" />
+    <link rel="stylesheet" href="https://mrjkorea.github.io/mrj-signin/mrj-auth.css" />
+    <script src="https://mrjkorea.github.io/mrj-signin/mrj-auth.js"></script>
+    <script src="https://mrjkorea.github.io/mrj-signin/mrj-auth-boot.js" data-mrj-app="memory-match"></script>
+`;
 const entry = JSON.parse(fs.readFileSync(path.join(dist, ".vite/manifest.json"), "utf8"))["index.html"];
 const js = entry.file, css = (entry.css || [])[0];
 const assetsOut = path.join(outDir, "assets"); fs.mkdirSync(assetsOut, { recursive: true });
@@ -28,7 +33,7 @@ const html = `<!DOCTYPE html>
     <meta name="mrj-build" content="${build}" />
     <title>Memory Game — MRJ English</title>
     <link rel="icon" href="./pics/cat.webp" />
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@700&family=Noto+Sans+KR:wght@700&family=Noto+Sans+JP:wght@700&family=Noto+Sans+SC:wght@700&family=Noto+Sans+Arabic:wght@700&family=Noto+Sans+Thai:wght@700&family=Noto+Sans+Devanagari:wght@700&display=swap" rel="stylesheet" />
+${wmDir ? "" : mrjSigninHead}    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@700&family=Noto+Sans+KR:wght@700&family=Noto+Sans+JP:wght@700&family=Noto+Sans+SC:wght@700&family=Noto+Sans+Arabic:wght@700&family=Noto+Sans+Thai:wght@700&family=Noto+Sans+Devanagari:wght@700&display=swap" rel="stylesheet" />
 ${wmDir ? `    <meta name="mrj-host" content="word-master" />
     <script>
       /* Word Master public mode (news packs): this game saves nothing on the device. */
